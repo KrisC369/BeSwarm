@@ -62,7 +62,7 @@ final class TumExampleFlightFacade {
             .withStateEstimator(stateEstimator)
             .withTimeProvider(RosTime.create(connectedNode))
             .withTrajectory4d(trajectory4d)
-            .withDurationInSeconds(trajectory4d.getTrajectoryDuration())
+            .withDurationInSeconds(trajectory4d.getTrajectoryDuration()+10)
             .withPidLinearXParameters(
                 PidParameters.builder().setKp(2).setKd(1).setKi(0).setLagTimeInSeconds(0.2).build())
             .withPidLinearYParameters(
