@@ -24,10 +24,12 @@ public final class CorkscrewTrajectory4D extends PeriodicTrajectory implements F
   private static final String VELOCITY_ERROR_MESSAGE =
       "velocity component is higher than 1 for the given origin-destination points, "
           + "velocity, radius and frequency values.";
-  private final FiniteTrajectory4d unitTrajectory;
+  private final UnitTrajectory unitTrajectory;
   private final double aroundX;
   private final double aroundY;
   private final Point4D origin;
+  private final Point3D destination;
+
   private Point4DCache cache;
 
   private CorkscrewTrajectory4D(
@@ -39,6 +41,8 @@ public final class CorkscrewTrajectory4D extends PeriodicTrajectory implements F
       double phase) {
     super(phase, Point4D.origin(), radius, frequency);
     this.origin = origin;
+    this.destination = destination;
+    checkArgument(!origin.equals(destination), "Origin should not be the same as destination");
     Point4D destinationProjection = Point4D.from(destination, 0);
     double distance = Point4D.distance(origin, destinationProjection);
     unitTrajectory =
@@ -54,14 +58,8 @@ public final class CorkscrewTrajectory4D extends PeriodicTrajectory implements F
     //translate origin to get angles to unit vectors.
     Point4D translated = destinationProjection.minus(origin);
 
-    //find angles to unit trajectory
-    double x = translated.getX();
-    double y = translated.getY();
-    double z = translated.getZ();
-
-    //check components for excessive speeds.
-    Point3D speedComponent =
-        Point3D.create(speed * (x / distance), speed * (y / distance), speed * (z / distance));
+    //find angles to unit trajectory and check components for excessive speeds.
+    Point3D speedComponent = Point3D.scale(Point3D.project(translated), speed / distance);
 
     checkArgument(
         isValidVelocity(speedComponent.getX(), speed, radius, frequency),
@@ -73,9 +71,11 @@ public final class CorkscrewTrajectory4D extends PeriodicTrajectory implements F
         isValidVelocity(speedComponent.getZ(), speed, radius, frequency),
         "Z " + VELOCITY_ERROR_MESSAGE);
 
-    double zyNorm = Math.sqrt(Math.pow(y, 2) + Math.pow(z, 2));
-    this.aroundX = (Math.PI / 2) - Math.acos(y / zyNorm);
-    this.aroundY = Math.acos(x / Math.sqrt(Math.pow(x, 2) + Math.pow(zyNorm, 2)));
+    double zyNorm = Math.sqrt(Math.pow(translated.getY(), 2) + Math.pow(translated.getZ(), 2));
+    this.aroundX = (Math.PI / 2) - Math.acos(translated.getY() / zyNorm);
+    this.aroundY =
+        Math.acos(
+            translated.getX() / Math.sqrt(Math.pow(translated.getX(), 2) + Math.pow(zyNorm, 2)));
 
     //set initial cache
     this.cache = newCache(Point4D.origin(), -1);
@@ -187,16 +187,28 @@ public final class CorkscrewTrajectory4D extends PeriodicTrajectory implements F
     return translationTransform(getCachePoint()).getAngle();
   }
 
+  private Point4D getOrigin() {
+    return origin;
+  }
+
+  private Point3D getDestination() {
+    return destination;
+  }
+
   @Override
   public String toString() {
     return "CorkscrewTrajectory4D{"
-            + "velocity="
-           // + getVelocity()
-            + ", src point="
-         //   + getSrcpoint()
-            + ", target point="
-         //   + getTargetpoint()
-            + '}';
+        + "velocity="
+        + unitTrajectory.getSpeed()
+        + ", origin point="
+        + getOrigin()
+        + ", destination point="
+        + getDestination()
+        + ", radius="
+        + unitTrajectory.getRadius()
+        + ", frequency="
+            + unitTrajectory.getFrequency()
+        + '}';
   }
 
   @AutoValue
@@ -301,15 +313,19 @@ public final class CorkscrewTrajectory4D extends PeriodicTrajectory implements F
     private final LinearTrajectory1D linear;
     private final double endPoint;
     private final double speed;
+    private final double frequency;
+    private final double radius;
     private Trajectory2d circlePlane;
     private boolean atEnd;
 
-    private UnitTrajectory(Trajectory2d circlePlane, double speed, double endPoint) {
+    private UnitTrajectory(CircleTrajectory2D circlePlane, double speed, double endPoint) {
       this.linear = new LinearTrajectory1D(0, speed);
       this.circlePlane = circlePlane;
       this.endPoint = endPoint;
       this.atEnd = false;
       this.speed = speed;
+      this.frequency = circlePlane.getFrequency();
+      this.radius = circlePlane.getRadius();
     }
 
     @Override
@@ -327,6 +343,18 @@ public final class CorkscrewTrajectory4D extends PeriodicTrajectory implements F
     private void markEnd() {
       this.atEnd = true;
       this.circlePlane = new NoMovement2DTrajectory();
+    }
+
+    double getSpeed() {
+      return speed;
+    }
+
+    private double getRadius() {
+      return radius;
+    }
+
+    double getFrequency() {
+      return frequency;
     }
 
     @Override

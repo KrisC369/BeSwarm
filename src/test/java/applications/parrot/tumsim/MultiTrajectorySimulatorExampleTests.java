@@ -18,7 +18,7 @@ import static org.junit.Assert.fail;
 
 /**
  * Initialization tests for TumSim example files. This test uses reflection to scan the tumsim
- * package for extensions of the AbstractTumSimulatorExample and runs initialization tests on
+ * package for implementations of the MultiTrajectoryServer and runs initialization tests on
  * instances of the found classes. These tests validate correct parameters passed to trajectory
  * creators before attempting to use such trajectories in simulation or real world experiments.
  *
@@ -56,7 +56,6 @@ public class MultiTrajectorySimulatorExampleTests {
     List<FiniteTrajectory4d> trajectories = Lists.newArrayList();
     for (TrajectoryServer s : allDifferentTrajectories) {
       trajectories.add(s.getConcreteTrajectory());
-    System.out.println(s.getConcreteTrajectory().getTrajectoryDuration());
     }
     TestUtils.testTrajectoryCollisions(trajectories);
   }

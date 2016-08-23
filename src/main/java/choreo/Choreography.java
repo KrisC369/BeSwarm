@@ -7,12 +7,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 import control.FiniteTrajectory4d;
 import control.Trajectory4d;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Queue;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * A choreography represents a sequence of different trajectories to be executed for set durations.
@@ -28,6 +28,7 @@ public final class Choreography extends BasicTrajectory implements FiniteTraject
   private final ImmutableList<ChoreoSegment> initialSegments;
   private final Queue<ChoreoSegment> segments;
   private double timeWindowShift;
+  private boolean hasRun;
 
   private Choreography(List<ChoreoSegment> segmentsArg) {
     super();
@@ -42,18 +43,25 @@ public final class Choreography extends BasicTrajectory implements FiniteTraject
   }
 
   private void checkChoreoSegments(double timeInSeconds) {
+    logFirstTime();
     double normTime = normalize(timeInSeconds);
     if (normTime >= getCurrentSegment().getDuration()) {
       shiftSegments();
     }
   }
 
+  private void logFirstTime() {
+    if (!hasRun && getLogger(Choreography.class).isDebugEnabled()) {
+      hasRun = true;
+      getLogger(Choreography.class).debug("Executing first choreo segment: " + segments.peek());
+    }
+  }
+
   private void shiftSegments() {
     if (this.segments.size() > 1) {
       this.timeWindowShift += segments.poll().getDuration();
-      if (LoggerFactory.getLogger(Choreography.class).isDebugEnabled()) {
-        LoggerFactory.getLogger(Choreography.class)
-                .debug("Executing next choreo segment: " + segments.peek());
+      if (getLogger(Choreography.class).isDebugEnabled()) {
+        getLogger(Choreography.class).debug("Executing next choreo segment: " + segments.peek());
       }
     }
   }

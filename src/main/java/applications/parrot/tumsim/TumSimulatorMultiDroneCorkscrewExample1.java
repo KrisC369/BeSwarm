@@ -16,6 +16,7 @@ public class TumSimulatorMultiDroneCorkscrewExample1 extends AbstractTumSimulato
   private static final double ENDY = -3.0;
   private static final double ENDZ = 1.5;
   private static final double ORIENTATION = -Math.PI / 2;
+  private static final double DISPLACEMENT = 0.5;
   private final double radius;
   private final double frequency;
   private final double velocity;
@@ -45,7 +46,11 @@ public class TumSimulatorMultiDroneCorkscrewExample1 extends AbstractTumSimulato
     Trajectory4d init = Trajectories.newHoldPositionTrajectory(startShift);
     FiniteTrajectory4d first =
         Trajectories.newCorkscrewTrajectory(start, end, velocity, radius, frequency, phaseShift);
-    Point3D endShift = Point3D.create(ENDX + StrictMath.cos(phaseShift), ENDY, ENDZ);
+    Point3D endShift =
+        Point3D.create(
+            ENDX - StrictMath.cos(phaseShift) * DISPLACEMENT,
+            ENDY,
+            ENDZ - StrictMath.cos(phaseShift) * DISPLACEMENT);
     Trajectory4d inter =
         Trajectories.newHoldPositionTrajectory(Point4D.from(endShift, ORIENTATION));
     return Choreography.builder()
