@@ -90,10 +90,6 @@ public class CorkscrewTrajectory4DTest {
       lz.add(trajectory.getDesiredPositionZ(i / 10d));
       la.add(trajectory.getDesiredAngleZ(i / 10d));
     }
-    System.out.println(lx);
-    System.out.println(ly);
-    System.out.println(lz);
-    System.out.println(la);
     assertBounds(lx, minBoundX, maxBoundX);
     assertBounds(ly, minBoundY, maxBoundY);
     assertBounds(lz, minBoundZ, maxBoundZ);
